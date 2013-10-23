@@ -1,4 +1,4 @@
-package fruit.dumb;
+package fruit.g8;
 
 public class FruitGenerator implements fruit.sim.FruitGenerator
 {
