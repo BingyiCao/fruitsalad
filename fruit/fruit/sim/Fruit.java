@@ -13,7 +13,7 @@ public class Fruit
     private static String ROOT_DIR = "fruit";
 
     // recompile .class file?
-    private static boolean recompile = false;
+    private static boolean recompile = true;
 
     // enable gui
     private static boolean gui = true;
