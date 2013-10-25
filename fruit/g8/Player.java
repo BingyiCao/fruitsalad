@@ -24,6 +24,8 @@ public class Player extends fruit.sim.Player
                         boolean canPick,
                         boolean musTake) {
     	counter++;
+    	
+    	
     	if (musTake){
 			return true;
 		}

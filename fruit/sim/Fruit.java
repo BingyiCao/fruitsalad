@@ -671,7 +671,7 @@ public class Fruit
             trace = Boolean.parseBoolean(args[4]);
 
         Player[] players = loadPlayers(playerPath);
-        shufflePlayer(players);
+        //shufflePlayer(players);
 
         // read a fruit distribution
         FruitGenerator fruitgen = (FruitGenerator)Class.forName(distgen).newInstance();
