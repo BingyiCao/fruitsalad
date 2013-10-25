@@ -7,14 +7,16 @@ public class Player extends fruit.sim.Player
 	int nplayer;
 	int[] pref;
 	int magic;
+	int position;
 	int magic_table[]={-1,0,0,1,1,2,2,2,3,3};
     public void init(int nplayers, int[] pref) {
     	this.nplayer=nplayers;
     	this.pref=pref;
-        if(nplayers<=9)
+    	this.position=this.getIndex();// position start from 0
+        if(nplayers-position<=9)
         	magic=magic_table[nplayers];
         else
-        	magic=(int) Math.round(0.369*(nplayers-this.getIndex()) );
+        	magic=(int) Math.round(0.369*(nplayers-position) );
     }
     int max=0;
     int counter=0;
