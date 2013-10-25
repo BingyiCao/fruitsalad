@@ -16,10 +16,10 @@ public class Fruit
     private static boolean recompile = false;
 
     // enable gui
-    private static boolean gui = true;
+    protected static boolean gui = true;
 
     // Step by step trace
-    private static boolean trace = true;
+    protected static boolean trace = true;
 
     // default parameters
     private static final String DEFAULT_PLAYERLIST = "players.list";
@@ -47,7 +47,7 @@ public class Fruit
 
   	// compile and load players dynamically
     //
-    static Player[] loadPlayers(String txtPath) {
+    protected static Player[] loadPlayers(String txtPath) {
 		// list of players
         List <Player> playersList = new LinkedList <Player> ();
 
@@ -467,7 +467,7 @@ public class Fruit
     }
 
 
-    private void play(boolean gui) throws Exception{
+    public void play(boolean gui) throws Exception{
         BufferedReader buffer = null;
 
         HTTPServer server = null;
@@ -671,7 +671,7 @@ public class Fruit
             trace = Boolean.parseBoolean(args[4]);
 
         Player[] players = loadPlayers(playerPath);
-        //shufflePlayer(players);
+        shufflePlayer(players);
 
         // read a fruit distribution
         FruitGenerator fruitgen = (FruitGenerator)Class.forName(distgen).newInstance();
@@ -743,7 +743,7 @@ public class Fruit
     // bowl of player
     private int[][][] bowlOfPlayer;
 
-    private int[] scores;
+    public int[] scores;
 
     private String action;
 

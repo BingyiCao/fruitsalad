@@ -38,7 +38,7 @@ public class Player extends fruit.sim.Player
 	private boolean round0(int[] bowl, int bowlId, int round,
             boolean canPick,
             boolean musTake) {
-    	System.out.printf("magic is %d", magic);
+    	//System.out.printf("magic is %d", magic);
         if(counter<=magic){
         	//System.out.println("we won't pick the bowl");
         	//System.out.printf("the score for %d bowl is %d\n", counter, score(bowl));
@@ -46,7 +46,7 @@ public class Player extends fruit.sim.Player
         		max=score(bowl);
         	}
         }else{
-        	System.out.println("we are in the picking round");
+        	//System.out.println("we are in the picking round");
         	if(score(bowl)>=max){
         		return true;
         	}else{
