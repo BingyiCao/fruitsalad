@@ -7,12 +7,14 @@ public class Player extends fruit.sim.Player
 	int nplayer;
 	int[] pref;
 	int magic;
+	int magic_table[]={-1,0,0,1,1,2,2,2,3,3};
     public void init(int nplayers, int[] pref) {
     	this.nplayer=nplayers;
     	this.pref=pref;
-       // System.out.printf("the number of players is %d\n", nplayers);
-        //System.out.printf("the index is %d\n", this.getIndex());
-    	magic=(int)(0.369*(nplayers-this.getIndex())+1);
+        if(nplayers<=9)
+        	magic=magic_table[nplayers];
+        else
+        	magic=(int) Math.round(0.369*(nplayers-this.getIndex()) );
     }
     int max=0;
     int counter=0;
@@ -20,6 +22,20 @@ public class Player extends fruit.sim.Player
                         boolean canPick,
                         boolean musTake) {
     	counter++;
+    	if (musTake){
+			return true;
+		}
+    	if (round==0) {
+            return round0(bowl,bowlId,round,canPick,musTake);
+        } else {
+            return round1(bowl,bowlId,round,canPick,musTake);
+        }
+    	
+    }
+    
+	private boolean round0(int[] bowl, int bowlId, int round,
+            boolean canPick,
+            boolean musTake) {
     	System.out.printf("magic is %d", magic);
         if(counter<=magic){
         	//System.out.println("we won't pick the bowl");
@@ -32,16 +48,18 @@ public class Player extends fruit.sim.Player
         	if(score(bowl)>=max){
         		return true;
         	}else{
-        		if (musTake){
-        			return true;
-        		}
         		return false;
         	}
         }
         return false;
-    }
-    
-    private int score(int[] bowl){
+	}
+	
+	private boolean round1(int[] bowl, int bowlId, int round, boolean canPick,
+				boolean musTake) {
+			return false;
+		}
+
+	private int score(int[] bowl){
     	int sum=0;
     	for(int i=0;i<12;i++){
     		sum+=pref[i]*bowl[i];
