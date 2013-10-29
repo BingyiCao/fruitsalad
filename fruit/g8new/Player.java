@@ -42,7 +42,7 @@ public class Player extends fruit.sim.Player
 		}
     	
     	//no enough information
-    	if (info.size()<2) {
+    	if (info.size()<=1) {
 			return false;
 		}
     	
@@ -63,7 +63,7 @@ public class Player extends fruit.sim.Player
     	double ExA=exptGreaterThan(b);
     	double ExB=exptLessThan(b);
     	double Ex2=PrA*ExA+PrB*ExB;
-    	if(Ex2>b) {
+    	if(Ex2>b) { //
     		return false;
     	}
     	else {
@@ -87,6 +87,13 @@ public class Player extends fruit.sim.Player
 		return sum/(1-probLessThan(b));
 	}
 	private double probLessThan(double b) {
+		if (sigma<1e-8) {
+			if (b>mu) {
+				return 1;
+			}else {
+				return 0;
+			}
+		}
 		return Phi((b - mu) / sigma);
 	}
     
