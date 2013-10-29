@@ -42,7 +42,7 @@ public class Player extends fruit.sim.Player
 		}
     	
     	//no enough information
-    	if (info.size()<2) {
+    	if (info.size()<=2) {
 			return false;
 		}
     	
