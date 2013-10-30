@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 package fruit.g3;
+=======
+package fruit.g2;
+>>>>>>> 8257636b878318893cb6b8f02165050d7988b5e4
 
 //Fruit generator: hit and miss
 public class FruitGenerator implements fruit.sim.FruitGenerator

@@ -51,7 +51,7 @@ public class Player extends fruit.sim.Player
     		futureBowls=nplayer-position-counter;
             //return round0(bowl,bowlId,round,canPick,musTake);
         } else {
-        	futureBowls=position+1-counter;
+        	futureBowls=nplayer-counter+1;
             //return round1(bowl,bowlId,round,canPick,musTake);
         }
     	double b=score(bowl);
