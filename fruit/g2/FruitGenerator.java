@@ -1,5 +1,9 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 package fruit.g3;
+=======
+package fruit.g2;
+>>>>>>> 8257636b878318893cb6b8f02165050d7988b5e4
 =======
 package fruit.g2;
 >>>>>>> 8257636b878318893cb6b8f02165050d7988b5e4
