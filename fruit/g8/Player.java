@@ -1,4 +1,4 @@
-package fruit.g8new;
+package fruit.g8;
 
 import java.util.*;
 
@@ -71,16 +71,16 @@ public class Player extends fruit.sim.Player
 		}
     }
     private double exptLessThan(double b) {
-    	double sum=0,interval=(b-12)/10000,val=12;
-		for (int i = 0; i <10000; i++) {
+    	double sum=0,interval=(b-12)/1000,val=12;
+		for (int i = 0; i <1000; i++) {
 			sum+=phi(val, mu, sigma)*val*interval;
 			val+=interval;
 		}
 		return sum/probLessThan(b);
 	}
 	private double exptGreaterThan(double b) {
-		double sum=0,interval=(bowSize*12-b)/10000,val=b;
-		for (int i = 0; i <10000; i++) {
+		double sum=0,interval=(bowSize*12-b)/1000,val=b;
+		for (int i = 0; i <1000; i++) {
 			sum+=phi(val, mu, sigma)*val*interval;
 			val+=interval;
 		}
