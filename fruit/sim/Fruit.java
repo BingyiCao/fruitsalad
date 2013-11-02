@@ -95,7 +95,7 @@ public class Fruit
                     System.err.println("OK");
                 }
                 // load class
-                System.err.print("Loading player class...   ");
+                //System.err.print("Loading player class...   ");
                 String className = ROOT_DIR + "." + group + ".Player";
                 Class playerClass = loader.loadClass(className);
                 System.err.println("OK");
@@ -524,12 +524,12 @@ public class Fruit
 
         int t = 0;
         for (int r = 0; r <= 1; r++) {
-            System.err.println("###### ROUND " + r + " ######");
+            //System.err.println("###### ROUND " + r + " ######");
             resetRound(r);
             for (int i = 0; i < players.length; i++) {
                 bowlId = i;
-                System.err.println();
-                System.err.println("====== BOWL " + r + "." + i + " ======");
+                //System.err.println();
+                //System.err.println("====== BOWL " + r + "." + i + " ======");
 
                 if (!gui && trace) {
                     try {
@@ -539,7 +539,7 @@ public class Fruit
                 }
 
                 int[] bowl = createBowl();
-                System.err.println(Arrays.toString(bowl));
+                //System.err.println(Arrays.toString(bowl));
                 currentBowl = bowl;
                 
                 int [] range = new int[players.length];
@@ -564,7 +564,7 @@ public class Fruit
                     boolean take = players[j].pass(bowl, i, round,
                                                    canPick,
                                                    mustTake);
-                    System.err.println("Bowl " + i + " is shown to player " + j);
+                    //System.err.println("Bowl " + i + " is shown to player " + j);
 
                     // only process the return value from qualified player
                     if (canPick) {
@@ -572,11 +572,11 @@ public class Fruit
                             hasBowl[j] = true;
                             bowlOfPlayer[round][j] = bowl.clone();
                             action = "Player " + (j+1) + " TAKES bowl (" + round + "," + i + ")";
-                            System.err.println(action);
+                            //System.err.println(action);
                         }
                         else {
                             action = "Player " + (j+1) + " PASSES bowl (" + round + "," + i + ")";
-                            System.err.println(action);
+                            //System.err.println(action);
                             choices[j]--;
                         }
 
@@ -590,9 +590,11 @@ public class Fruit
                             f = false;
                         } while (req == 'B');
                         // update the html file
-                        out = new FileOutputStream(ROOT_DIR + "/sim/webpages/" + t + ".html");
-                        out.write(state().getBytes());
-                        out.close();
+                        if(gui){
+                        	out = new FileOutputStream(ROOT_DIR + "/sim/webpages/" + t + ".html");
+                        	out.write(state().getBytes());
+                        	out.close();
+                        }
 
                         // break the loop
                         if (take || mustTake)
