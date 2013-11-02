@@ -19,6 +19,8 @@ public class Player extends fruit.sim.Player
         	magic=magic_table[nplayers-position];
         else
         	magic=(int) Math.round(0.369*(nplayers-position) );
+    	info.clear();
+    	bowlIds.clear();
     }
     int max=0;
     int counter=0;
@@ -33,13 +35,13 @@ public class Player extends fruit.sim.Player
         	}
     		//update(bowSize*6);
     	}
-    	//System.out.printf("\n counter is %d\n", counter);
-    	//record[counter-1]=score(bowl);
-    	update(score(bowl));
+    	update(bowl,bowlId,round);
     	
     	if (musTake){
 			return true;
 		}
+    	if(canPick==false)
+    		return false;
     	
     	//no enough information
     	if (info.size()<=1) {
@@ -55,15 +57,25 @@ public class Player extends fruit.sim.Player
             //return round1(bowl,bowlId,round,canPick,musTake);
         }
     	double b=score(bowl);
+    	
+    	double PrB=1, p=probLessThan(b);
+    	for (int i = 0; i < futureBowls; i++) {			PrB*=p;		}
+    	double PrA=1-PrB;
+    	double ExA=exptGreaterThan(b);
+    	double ExB=exptLessThan(b);
+    	double Ex2=PrA*ExA+PrB*ExB;
+    	
     	double fb=f(b,futureBowls);
     	double fb1=f(b+1, futureBowls);
-    	if(fb<fb1) { //
+    	if(fb>b) { //
     		return false;
     	}
     	else {
 			return true;
 		}
     }
+    double mu,sigma;
+    ArrayList<Integer> scores=new ArrayList<Integer>();
     private double f(double b, int futureBowls) {
     	double PrB=1, p=probLessThan(b);
     	for (int i = 0; i < futureBowls; i++) {
@@ -106,7 +118,8 @@ public class Player extends fruit.sim.Player
         if (z < -8.0) return 0.0;
         if (z >  8.0) return 1.0;
         double sum = 0.0, term = z;
-        for (int i = 3; sum + term != sum; i += 2) {
+        int i=3;
+        for (; sum + term != sum; i += 2) {
             sum  = sum + term;
             term = term * z * z / i;
         }
@@ -121,18 +134,24 @@ public class Player extends fruit.sim.Player
         return phi((x - mu) / sigma) / sigma;
     }
     
-	ArrayList<Integer> info=new ArrayList<Integer>();
-    double mu,sigma;
-	private void update(int x) {
-		info.add(x);
+	static ArrayList<int[]> info=new ArrayList<int[]>();
+	static HashSet<Integer> bowlIds=new HashSet<>();
+	private void update(int[] x, int bowlId, int round) {
+		if (bowlIds.contains(bowlId+round*nplayer)==false) {
+			info.add(x.clone());
+			bowlIds.add(bowlId+round*nplayer);
+		}
 		mu=0;
-		for(Integer y:info){
-			mu+=y;
+		for(int[] y:info){
+			mu+=score(y);
 		}
 		mu=mu/info.size();
 		sigma=0;
-		for(Integer y:info){
-			sigma+=(y-mu)*(y-mu);
+		scores.clear();
+		for(int[] y:info){
+			int s=score(y);
+			sigma+=(s-mu)*(s-mu);
+			scores.add(s);
 		}
 		sigma/=info.size();
 		sigma=Math.sqrt(sigma);
