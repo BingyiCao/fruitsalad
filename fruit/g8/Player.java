@@ -47,8 +47,7 @@ public class Player extends fruit.sim.Player
     	if (info.size()<=1) {
 			return false;
 		}
-    	
-    	int futureBowls=0;
+    
     	if (round==0) {
     		futureBowls=nplayer-position-counter;
             //return round0(bowl,bowlId,round,canPick,musTake);
@@ -65,18 +64,33 @@ public class Player extends fruit.sim.Player
     	double ExB=exptLessThan(b);
     	double Ex2=PrA*ExA+PrB*ExB;
     	
-    	double fb=f(b,futureBowls);
-    	double fb1=f(b+1, futureBowls);
-    	if(fb>b) { //
+    	double tStar=search();
+    	double fTStar=f(tStar);	
+    	//double fb=f(b,futureBowls);
+    	//double fb1=f(b+1, futureBowls);
+    	if(fTStar>b) { //
     		return false;
     	}
     	else {
 			return true;
 		}
     }
+    int futureBowls=0;
     double mu,sigma;
     ArrayList<Integer> scores=new ArrayList<Integer>();
-    private double f(double b, int futureBowls) {
+    private double search() {
+		double l=mu-sigma*2;
+		double r=mu+sigma*2;
+		while (l+0.1<r){
+			double t1=(r-l)/3+l;
+			double t2=2*(r-l)/3+l;
+			if(f(t1) < f(t2))
+				l=t1;
+			else r=t2;
+		}
+		return (l+r)/2;
+	}
+    private double f(double b) {
     	double PrB=1, p=probLessThan(b);
     	for (int i = 0; i < futureBowls; i++) {
 			PrB*=p;
