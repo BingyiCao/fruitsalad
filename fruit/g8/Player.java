@@ -55,6 +55,16 @@ public class Player extends fruit.sim.Player
             //return round1(bowl,bowlId,round,canPick,musTake);
         }
     	double b=score(bowl);
+    	double fb=f(b,futureBowls);
+    	double fb1=f(b+1, futureBowls);
+    	if(fb<fb1) { //
+    		return false;
+    	}
+    	else {
+			return true;
+		}
+    }
+    private double f(double b, int futureBowls) {
     	double PrB=1, p=probLessThan(b);
     	for (int i = 0; i < futureBowls; i++) {
 			PrB*=p;
@@ -63,14 +73,9 @@ public class Player extends fruit.sim.Player
     	double ExA=exptGreaterThan(b);
     	double ExB=exptLessThan(b);
     	double Ex2=PrA*ExA+PrB*ExB;
-    	if(Ex2>b) { //
-    		return false;
-    	}
-    	else {
-			return true;
-		}
-    }
-    private double exptLessThan(double b) {
+    	return Ex2;
+	}
+	private double exptLessThan(double b) {
     	double sum=0,interval=(b-12)/1000,val=12;
 		for (int i = 0; i <1000; i++) {
 			sum+=phi(val, mu, sigma)*val*interval;
