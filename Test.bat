@@ -1,2 +1,2 @@
-java fruit.sim.Fruit players.list 25 uniform.txt false false 1000 1>out.txt 2>err.txt
+java fruit.sim.Fruit players.list 1200 power2.txt false false 10000 1>out.txt 2>err.txt
 pause
