@@ -167,6 +167,7 @@ public class Player extends fruit.sim.Player
 			sigma+=(s-mu)*(s-mu);
 			scores.add(s);
 		}
+		//sigma+=2*13*25*bowSize/12.0;
 		sigma/=info.size();
 		sigma=Math.sqrt(sigma);
 	}
