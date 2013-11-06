@@ -1,7 +1,6 @@
 package fruit.g2;
 
 import java.util.*;
-import java.io.*;
 
 public class Player extends fruit.sim.Player
 {
@@ -14,7 +13,6 @@ public class Player extends fruit.sim.Player
     private int round;
     // Housekeeping, useless in functionality
     private boolean picked;
-    private double[] coefficients = new double[100];
 
     public void init(int nplayers, int[] pref) {
         stat = new Stat(nplayers, pref);
@@ -23,19 +21,6 @@ public class Player extends fruit.sim.Player
         npassed = 0;
         round = 0;
         picked  = false;
-	
-	try{
-		BufferedReader buffer = new BufferedReader(new FileReader("fruit/g2/uniform_10000.txt"));
-		for(int i = 1; i < 100; i++){
-			String sCoeff = buffer.readLine();
-			float coeff = Float.parseFloat(sCoeff);
-			coefficients[i] = coeff;
-		}
-	}
-	catch (Exception e){
-		e.printStackTrace();
-	}
-		
     }
 
     public boolean pass(int[] bowl, int bowlId, int round,
@@ -63,6 +48,10 @@ public class Player extends fruit.sim.Player
                 return true;
             }
         }
+	else if (stat.stdev()<=0.1*stat.getNFruits()){
+		return false;  	
+	}
+ 
         // otherwise look for avg + std
         else {
 	    double coeff = getCoeff(choiceLeft());
@@ -79,11 +68,12 @@ public class Player extends fruit.sim.Player
     
     public double getCoeff(int choiceLeft){
 
-	assert(choiceLeft>0);
-	if (choiceLeft>=100)
-		return coefficients[99];
-	else
-		return coefficients[choiceLeft];
+	if (choiceLeft < 2)
+	   return 0.0;
+        else{
+	   System.out.println("coefficient chosen: " + (choiceLeft/4.0 - .5));
+           return choiceLeft/4.0-.5;
+	}
     }
 
     public double adjustedStdDev(double stdev){

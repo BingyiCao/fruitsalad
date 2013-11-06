@@ -26,10 +26,10 @@ class MLE {
     int diff = Math.abs(mean - sample);
 
     // .46 + 2(.22) + 2(.04) + 2(0.01) = 1.0
-    if (diff == 0) return 0.46f;
-    else if (diff == 1) return 0.22f;
-    else if (diff == 2) return 0.04f;
-    else if (diff == 3) return 0.01f;
+    if (diff == 0) return 1.0f;
+    //else if (diff == 1) return 0.22f;
+    //else if (diff == 2) return 0.04f;
+    //else if (diff == 3) return 0.01f;
     return 0f;
   }
 
@@ -44,15 +44,13 @@ class MLE {
   public float fruitOccuranceMLE(int fruit) {
     float[] gaussianArr = new float[numFruitsPerBowl + 1];
     for (int i = 0; i < occuranceHist[0].length; i++){
-      for (int j = 0; j < occuranceHist[0].length; j++){ //TODO: just loop across 3 on each side
-        gaussianArr[i] += gaussian(i, j) * occuranceHist[fruit][j];
-      }
+      gaussianArr[i] += gaussian(i, i) * occuranceHist[fruit][i];
     }
-    return Vectors.maxIndex(gaussianArr);
+    return Vectors.sum(gaussianArr) / gaussianArr.length;
   }
 
   // Get MLE for a platter by inferring from bowls that youve seen
-  private float[] platter(){
+  public float[] platter(){
     return Vectors.scale(
       distribution(),
       (float) (numPlayers * numFruitsPerBowl)
@@ -70,6 +68,7 @@ class MLE {
   public float[] bowl(boolean firstRound){
     float[] averageBowl = new float[NUM_FRUIT_TYPES];
     float[] platter = platter();
+    System.out.println(Arrays.toString(platter));
     for (int i = 0; i < 1000; i++) {
       float[] tempPlatter = platter.clone();
       float[] tempBowl = simulateBowl(tempPlatter);
@@ -120,6 +119,13 @@ class MLE {
     assert false;
 
     return -1;
+  }
+
+  public int mostCanSee(int fruit){
+    return Math.min(
+      (int) Math.max(Math.ceil(platter()[fruit]), 0),
+      (int) numFruitsPerBowl
+    );
   }
 
 

@@ -8,8 +8,9 @@ public class Player extends fruit.sim.Player
 	int nplayers, index, choice = -1;
 	int[] pref;
 	int[][] choicelist;
-    int bowlSize;
 
+    int bowlSize;
+    int totalFruitSeen = 0;
     int firstRoundBowlsSeen = 0;
     int secondRoundBowlsSeen = 0;
     int[][] firstRoundBowlHistory;
@@ -17,103 +18,70 @@ public class Player extends fruit.sim.Player
 
     boolean firstBowlReceived = false;
 
-	boolean createLog = false; // Toggle while debugging
-	PrintWriter outfile;
-
-	public void init(int nplayers, int[] pref)
-	{
+	public void init(int nplayers, int[] pref) {
 		this.nplayers = nplayers;
 		this.pref = pref;
 		this.index = getIndex();
-		choicelist = new int[nplayers + 1][pref.length];
 
+		this.choicelist = new int[nplayers + 1][pref.length];
+
+        // Recording the history of bowls we've seen
         this.firstRoundBowlHistory = new int[nplayers - getIndex()][typesOfFruit];
         this.secondRoundBowlHistory = new int[getIndex() + 1][typesOfFruit];
-
-		if(createLog) try {
-			FileWriter fstream = new FileWriter("fruit/fruit.g5/log.txt", false);
-			outfile = new PrintWriter(fstream);
-			outfile.println("Players : " + Integer.toString(nplayers));
-			outfile.println("Index   : " + Integer.toString(index));
-			outfile.println("");
-			outfile.flush();
-		} catch (Exception e){ }
 	}
 
-
-    public boolean pass(int[] bowl, int bowlId, int round, boolean canPick, boolean musTake)
-    {
+    public boolean pass(int[] bowl, int bowlId, int round, boolean canPick, boolean musTake) {
         updateStats(bowl, round);
-        // Use the stopping strategy in round one
-        if (round == 0) {
-            return stoppingStrategy(bowl, bowlId, round, canPick, musTake);
-        }
-        else
-        {
-            predictDistribution();
-            double expectedScore = calculateExpectedScore();
 
-            // Take a bowl greater than your expected score based on the distribution
-            if (bowlScore(bowl) > expectedScore) {
-                return true;
-            }
+        if (totalFruitSeen >= 60) {
+            return distributionStrategy(bowl);
+        } else {
+            return stoppingStrategy(bowl, round);
         }
-
-        return false;
     }
 
-	public boolean stoppingStrategy(int[] bowl, int bowlId, int round, boolean canPick, boolean musTake)
-	{
-		int choicesleft, cutoff = 0, numfruits = 0;
-		boolean pickflag = false;
+	public boolean stoppingStrategy(int[] bowl, int round) {
+		int choicesLeft, cutoff = 0;
+		boolean pickFlag = false;
 		
 		choice++;
 		choicelist[choice] = bowl.clone();
 
-		for (int i = 0; i < bowl.length; i++)
-			numfruits = numfruits + bowl[i];
-		
-		if(round == 0)
-		{
-			choicesleft = nplayers - index - choice; 
+		if (round == 0) {
+			choicesLeft = nplayers - index - choice;
 			if((choice + 1) > Math.round((nplayers - index) / Math.E))
-				pickflag = true;
-		}
-		
-		else
-		{
-			choicesleft = nplayers + 1 - choice;
+				pickFlag = true;
+		} else {
+			choicesLeft = nplayers + 1 - choice;
 			if((choice + 1) > Math.round((nplayers + 1) / Math.E))
-				pickflag = true;
+				pickFlag = true;
 		}
 		
-		for(int i = choice - 1, j = 0; i > -1 && j < Math.round(choicesleft / (Math.E - 1));  i--, j++)
-		{
+		for (int i = choice - 1, j = 0; i > -1 && j < Math.round(choicesLeft / (Math.E - 1));  i--, j++) {
 			if(bowlScore(choicelist[i]) > cutoff)
 				cutoff = bowlScore(choicelist[i]);
 		}
 		
-		if(createLog)
-		{
-			outfile.println("Round     : " + Integer.toString(round));
-			outfile.println("Choice    : " + Integer.toString(choice));
-			outfile.println("Remaining : " + Integer.toString(choicesleft));
-			outfile.println("Cutoff    : " + Integer.toString(cutoff));
-			outfile.println("Score     : " + Integer.toString(bowlScore(bowl)));
-			outfile.println("Pickflag  : " + Boolean.toString(pickflag));
-			outfile.println("");
-			outfile.flush();
-		}
-		
-		if((pickflag && bowlScore(bowl) > cutoff) || (bowlScore(bowl) > (int) (9.0 * numfruits)))
+		if((pickFlag && bowlScore(bowl) > cutoff) || (bowlScore(bowl) > (int) (9.0 * bowlSize)))
 			return true;
 
 		return false;
 	}
 
+    public boolean distributionStrategy(int[] bowl) {
+        predictDistribution();
+        double expectedScore = calculateExpectedScore();
+
+        // Take a bowl greater than your expected score based on the distribution
+        if (bowlScore(bowl) > expectedScore + .05 * expectedScore)
+            return true;
+
+        return false;
+    }
+
     /**
      * Count the number of each fruit and put it as a fraction over the total number of fruit seen.
-     * This is the predicted distribution
+     * This is the predicted distribution, given as a probability of each fruit
      * @return An array of probabilities of each fruit
      */
     public double[] predictDistribution() {
@@ -172,6 +140,8 @@ public class Player extends fruit.sim.Player
             firstBowlReceived = true;
         }
 
+        totalFruitSeen += this.bowlSize;
+
         if (round == 0) {
             firstRoundBowlHistory[firstRoundBowlsSeen] = bowl;
             firstRoundBowlsSeen++;
@@ -180,7 +150,6 @@ public class Player extends fruit.sim.Player
             secondRoundBowlsSeen++;
         }
     }
-
 
     /**
      * Calculates the score of a bowl

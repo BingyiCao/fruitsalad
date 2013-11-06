@@ -74,14 +74,20 @@ public class Player extends fruit.sim.Player
 
 		// Update fruit history as bowls come by
 		fruitHistory = history(bowl, bowlId, round);
-		
-		//calculate distribution	
-		bowls_seen[round]++;
-		estimateDistribution(bowl, bowlId, round, bowlSize);
-	
+
+		//choosing between distribution and threshhold/offset based on bowlSize
+		if(bowlSize < 30){
+			//calculate distribution	
+			bowls_seen[round]++;
+			estimateDistribution(bowl, bowlId, round, bowlSize);
+		}else{
+			//calculate distribution
+			estimateDistribution_orig();
+		}
+
 		//get expected score
 		expected = expectedValue(bowl, bowlId, round);
-		offset = offset(round, expected);
+		offset = linearOffset(round, expected);
 
 		if (musTake)
 			return true;
@@ -215,10 +221,10 @@ public class Player extends fruit.sim.Player
 
     }
 
-	public double offset(int round, double expectedValue){
+	public double linearOffset(int round, double expectedValue){
 		this.bowlsSeen[round]++;		
 		int totalSelections = 0;
-		double CONSTANT = 0.5;
+		double CONSTANT = 0.2;
 
 		int totBowls = n_players - playerIndex + 1;
 		if(round == 1)
@@ -232,7 +238,4 @@ public class Player extends fruit.sim.Player
 			return CONSTANT * expectedValue * bowlsLeft / totBowls; 
 
 	}
-    
 }
-
-
