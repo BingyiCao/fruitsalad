@@ -1,0 +1,22 @@
+dist:
+only 2 or 6 fruits- uniform
+normal dist
+exponential
+uniform
+
+players:
+many instances of same player to calibrate the number of turns
+3
+6 (if you have time )
+10, 1 of each group, 1 dumb
+9, 1 of each group
+90, 9 of each group, 9 dumb
+20, 2 of each ,2 dumb
+(record the position of players in each turn)
+
+individual bowl size:
+1
+12
+36
+10*(# players)
+1200 (consume CPU time)

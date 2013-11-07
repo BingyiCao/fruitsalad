@@ -148,8 +148,10 @@ public class Player extends fruit.sim.Player
         return phi((x - mu) / sigma) / sigma;
     }
     
-	static ArrayList<int[]> info=new ArrayList<int[]>();
-	static HashSet<Integer> bowlIds=new HashSet<>();
+	//static 
+	ArrayList<int[]> info=new ArrayList<int[]>();
+	//static 
+	HashSet<Integer> bowlIds=new HashSet<>();
 	private void update(int[] x, int bowlId, int round) {
 		if (bowlIds.contains(bowlId+round*nplayer)==false) {
 			info.add(x.clone());
