@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.*;
 import java.net.*;
 import javax.tools.*;
-
+import java.util.concurrent.*;
 
 public class Fruit
 {
@@ -26,6 +26,7 @@ public class Fruit
     private static final String DEFAULT_DISTRIBUTION = "uniform.txt";
     private static int DEFAULT_BOWL_SIZE = 10;
 
+    private static int TIME_OUT = 50;
 
 	// list files below a certain directory
 	// can filter those having a specific extension constraint
@@ -95,7 +96,7 @@ public class Fruit
                     System.err.println("OK");
                 }
                 // load class
-                //System.err.print("Loading player class...   ");
+                System.err.print("Loading player class...   ");
                 String className = ROOT_DIR + "." + group + ".Player";
                 Class playerClass = loader.loadClass(className);
                 System.err.println("OK");
@@ -505,11 +506,14 @@ public class Fruit
             buffer = new BufferedReader(new InputStreamReader(System.in));
         }
 
-		for (File f : directoryFiles(ROOT_DIR + "/sim/webpages", ".html"))
-			f.delete();
-		FileOutputStream out = new FileOutputStream(ROOT_DIR + "/sim/webpages/index.html");
-		out.write(state().getBytes());
-		out.close();
+        FileOutputStream out = null;
+        if (gui) {
+            for (File f : directoryFiles(ROOT_DIR + "/sim/webpages", ".html"))
+                f.delete();
+            out = new FileOutputStream(ROOT_DIR + "/sim/webpages/index.html");
+            out.write(state().getBytes());
+            out.close();
+        }
 
         boolean f = true;
         if (server != null) do {
@@ -524,7 +528,7 @@ public class Fruit
 
         int t = 0;
         for (int r = 0; r <= 1; r++) {
-            //System.err.println("###### ROUND " + r + " ######");
+            System.err.println("###### ROUND " + r + " ######");
             resetRound(r);
             for (int i = 0; i < players.length; i++) {
                 bowlId = i;
@@ -558,13 +562,46 @@ public class Fruit
 
                     int j = range[k];
                     currentPlayer = j;
-
                     boolean canPick = !hasBowl[j];
                     boolean mustTake = canPick && (choices[j] == 0); 
-                    boolean take = players[j].pass(bowl, i, round,
-                                                   canPick,
-                                                   mustTake);
-                    //System.err.println("Bowl " + i + " is shown to player " + j);
+                    boolean take = false;
+
+                    if (!timeout[j]) {
+                        ExecutorService executor = Executors.newSingleThreadExecutor();
+                        PlayTask task = new PlayTask(players[j], bowl, i, round, canPick, mustTake);
+                        executor.execute(task);
+                        executor.shutdown();
+
+                        try {
+                            if (!executor.awaitTermination(TIME_OUT, TimeUnit.MILLISECONDS)) {
+                                executor.shutdownNow();
+                            }
+                        } catch (InterruptedException e) {
+                            System.err.println("Unexpected interruption in main thread");
+                        }
+
+                        if (!executor.isTerminated()) {
+                            // timeout
+                            timeout[j] = true;
+                        }
+                        else if (task.exception != null) {
+                            // disqualify
+                            timeout[j] = true;
+                        }
+                        else
+                            take = task.take;
+                    }
+
+                    // long startTime = System.nanoTime();                    
+                    // try {
+                    //     take = players[j].pass(bowl, i, round,
+                    //                                    canPick,
+                    //                                    mustTake);
+                    // } catch (Exception e) {
+                    //     e.printStackTrace();
+                    // }
+                    // long endTime = System.nanoTime();
+                    //                    System.err.println(players[j].name + ":" + (endTime-startTime));
 
                     // only process the return value from qualified player
                     if (canPick) {
@@ -580,20 +617,20 @@ public class Fruit
                             choices[j]--;
                         }
 
-                        f = true;
-                        if (server != null) do {
-                            if (!f) refresh = 0;
-                            server.replyState(state(), refresh);
-                            while ((req = server.nextRequest(0)) == 'I' || req == 'X');
-                            if (req == 'S') refresh = 0;
-                            else if (req == 'P') refresh = 1;
-                            f = false;
-                        } while (req == 'B');
-                        // update the html file
-                        if(gui){
-                        	out = new FileOutputStream(ROOT_DIR + "/sim/webpages/" + t + ".html");
-                        	out.write(state().getBytes());
-                        	out.close();
+                        if (gui) {
+                            f = true;
+                            if (server != null) do {
+                                    if (!f) refresh = 0;
+                                    server.replyState(state(), refresh);
+                                    while ((req = server.nextRequest(0)) == 'I' || req == 'X');
+                                    if (req == 'S') refresh = 0;
+                                    else if (req == 'P') refresh = 1;
+                                    f = false;
+                                } while (req == 'B');
+                            // update the html file
+                            out = new FileOutputStream(ROOT_DIR + "/sim/webpages/" + t + ".html");
+                            out.write(state().getBytes());
+                            out.close();
                         }
 
                         // break the loop
@@ -680,6 +717,8 @@ public class Fruit
 
         // bowl of player of both rounds
         bowlOfPlayer = new int[2][players.length][];
+
+        timeout = new boolean[players.length];
 
         printConfig();
     }
@@ -774,9 +813,32 @@ public class Fruit
         String[] playerNames = loadPlayerNames(playerPath);
         int totalScores[] = new int[playerNames.length];
 
+        // logging game result
+        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result" + bowlsize + ".txt",true)));
+        // number of players
+        writer.print(playerNames.length + " ");
+        // bowl size
+        writer.print(bowlsize + " ");
+        // dist name
+        writer.println(distPath);
+        // name of all players
+        for (int p = 0; p < playerNames.length; ++p) {
+            writer.print(playerNames[p] + " ");
+        }
+        writer.println();
+
         for (int r = 0; r < repeats; ++r) {
             Player[] players = loadPlayers(playerPath);
             shufflePlayer(players);
+
+            // logging player position
+            int[] indexes = new int[players.length];
+            for (int p = 0; p < players.length; ++p)
+                indexes[players[p].id] = p;
+
+            for (int p = 0; p < players.length; ++p)
+                writer.print(indexes[p] + " ");
+            writer.println();
 
             // read a fruit distribution
             //        FruitGenerator fruitgen = (FruitGenerator)Class.forName(distgen).newInstance();
@@ -790,15 +852,35 @@ public class Fruit
             for (int p = 0; p < players.length; ++p) {
                 totalScores[players[p].id] += game.scores[p];
             }
+
+            // logging total scores
+            int[] scores = new int[players.length];
+            for (int p = 0; p < players.length; ++p)
+                scores[players[p].id] = game.scores[p];
+
+            for (int p = 0; p < players.length; ++p)
+                writer.print(scores[p] + " ");
+            writer.println();
+
+            // logging timeout flags
+            int[] timeout = new int[players.length];
+            for (int p = 0; p < players.length; ++p)
+                timeout[players[p].id] = (game.timeout[p]) ? 1 : 0;
+            
+            for (int p = 0; p < players.length; ++p) {
+                writer.print(timeout[p] + " ");
+            }
+            writer.println();
+
         }
 
 
         // print aggregate score
         System.err.println("###### Tournament result ######");
-        for (int p = 0; p < playerNames.length; ++p) {
-            System.err.println(playerNames[p] + ":" + 1.0 * totalScores[p] / repeats);
-        }
-        
+        for (int i = 0; i < totalScores.length; i++) {
+			System.err.println(playerNames[i]+" "+totalScores[i]/(double)repeats);
+		}
+        writer.close();
     }
 
     
@@ -864,6 +946,9 @@ public class Fruit
     private int[] expectation;
     // score
     private int[] scores;
+
+    // time out
+    private boolean[] timeout;
 
     private String action;
 

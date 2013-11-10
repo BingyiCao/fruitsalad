@@ -1,6 +1,7 @@
 package fruit.g2;
 
 import java.util.*;
+import java.io.*;
 
 public class Player extends fruit.sim.Player
 {
@@ -13,6 +14,8 @@ public class Player extends fruit.sim.Player
     private int round;
     // Housekeeping, useless in functionality
     private boolean picked;
+    private double[] coefficients = new double[100];
+    private int bowlSize = 0;
 
     public void init(int nplayers, int[] pref) {
         stat = new Stat(nplayers, pref);
@@ -21,12 +24,28 @@ public class Player extends fruit.sim.Player
         npassed = 0;
         round = 0;
         picked  = false;
+	
+	try{
+		BufferedReader buffer = new BufferedReader(new FileReader("fruit/g2/uniform_10000.txt"));
+		for(int i = 1; i < 100; i++){
+			String sCoeff = buffer.readLine();
+			float coeff = Float.parseFloat(sCoeff);
+			coefficients[i] = coeff;
+		}
+	}
+	catch (Exception e){
+		e.printStackTrace();
+	}
+		
     }
 
     public boolean pass(int[] bowl, int bowlId, int round,
                         boolean canPick,
                         boolean mustTake) {
-        npassed++;
+        for (int i = 0; i < bowl.length; i++){
+		bowlSize+= bowl[i];
+	}
+	npassed++;
         stat.add(bowl);
 	System.out.println("choice left: " + choiceLeft() + " can pick " + canPick);
         if (choiceLeft() == 0 && this.round == 0) {
@@ -48,15 +67,21 @@ public class Player extends fruit.sim.Player
                 return true;
             }
         }
-	else if (stat.stdev()<=0.1*stat.getNFruits()){
-		return false;  	
-	}
- 
         // otherwise look for avg + std
         else {
-	    double coeff = getCoeff(choiceLeft());
-	    System.out.println("Score to take: " + (stat.average() + coeff*adjustedStdDev(stat.stdev())));
-            if (stat.score(npassed-1) < stat.average() + coeff*adjustedStdDev(stat.stdev()))
+	    double average = stat.average();
+	    if (round == 1 && npassed*bowlSize >36){
+		double fullScore = average * nplayers;
+		int newRoundIndex = nplayers - getIndex();
+		for (int i = newRoundIndex; i < npassed; i++){
+		     fullScore -= stat.score(i);
+		}
+		double newAverage = fullScore/(1.0*nplayers-npassed+newRoundIndex);			if(newAverage<average)
+			average = newAverage;
+	    }		    	
+		double coeff = getCoeff(choiceLeft());
+	    System.out.println("Score to take: " + (average + coeff*adjustedStdDev(stat.stdev())));
+            if (stat.score(npassed-1) < average + coeff*adjustedStdDev(stat.stdev()))
                 return false;
             else {
                 picked = true;
@@ -68,12 +93,11 @@ public class Player extends fruit.sim.Player
     
     public double getCoeff(int choiceLeft){
 
-	if (choiceLeft < 2)
-	   return 0.0;
-        else{
-	   System.out.println("coefficient chosen: " + (choiceLeft/4.0 - .5));
-           return choiceLeft/4.0-.5;
-	}
+	assert(choiceLeft>0);
+	if (choiceLeft>=100)
+		return coefficients[99];
+	else
+		return coefficients[choiceLeft];
     }
 
     public double adjustedStdDev(double stdev){

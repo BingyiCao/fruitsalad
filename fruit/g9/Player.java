@@ -4,6 +4,32 @@ import java.util.*;
 
 public class Player extends fruit.sim.Player
 {
+    // belief for initial distribution
+    // we don't actually use it anymore
+    // The uniform distribution belief
+    private double[] belief = {1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0,
+                                 1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0};
+
+    /*
+    // The normal distribution belief
+    private double[] belief = {0.03. 0.05, 0.06, 0.08, 0.1, 0.18
+                                ,0.18, 0.1, 0.08, 0.06, 0.05, 0.03 };
+    */                      
+    // parameter for statistic updating
+    private double updateWeight = 0;
+    // parameter S: parameter for smoothed statistic updating, "rare_count" for fruit not observed in this bowl
+    private double smoothing_factor = 0.5;
+    // parameter for strategy choosing
+    private int bowlSizeThreshold = 0;
+    // parameter D: parameter for the speed to lower the threshold of taking a bowl
+    // for linear decreasing threshold
+    // the threshold = avg + SD * {(fraction of bowls left)*decreaseSpeed + minimalShift}
+    private double decreaseSpeed = 15.0;
+    private double minimalShift = 0.00;
+    private boolean useLog = true;
+    // for log decreasing threshold
+    // the threshold = avg + SD * { decreaseSpeed*log(number of bowls left) + minimalShift}
+
     // current bowl information
     private int[] bowl;
     private int bowlId;
@@ -44,30 +70,9 @@ public class Player extends fruit.sim.Player
 
     private int lastRound;
 
-
-    // belief for initial distribution
-    // The uniform distribution belief
-    private double[] belief = {1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0,
-                                 1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0, 1.0/12.0};
-
-    /*
-    // The normal distribution belief
-    private double[] belief = {0.03. 0.05, 0.06, 0.08, 0.1, 0.18
-                                ,0.18, 0.1, 0.08, 0.06, 0.05, 0.03 };
-    */                      
-    // parameter for statistic updating
-    private double updateWeight = 0;
-    // parameter for smoothed statistic updating, "rare_count" for fruit not observed in this bowl
-    private double smoothing_factor = 0.5;
-    // parameter for strategy choosing
-    private int bowlSizeThreshold = 0;
-    // parameter for the speed to lower the expectation
-    private double decreaseSpeed = 4.0;
-
     public void init(int nplayers, int[] pref) {
         this.nplayers = nplayers;
         this.pref = deepCopyArray( pref );
-        this.nplayers = nplayers;
         first_history = new int[ nplayers ][ pref.length ];
         second_history = new int[ nplayers ][ pref.length ];
         first_score = new int[ nplayers ];
@@ -321,10 +326,54 @@ public class Player extends fruit.sim.Player
         return ret;
     }
 
-    private double good_bowl_score(double decreaseFactor) {
+    private double linear_decreasing_threshold(double x, int rest, int total) {
+        double decreaseFactor = (double)(rest) / (double)(total);
+        return x * (decreaseFactor / decreaseSpeed + minimalShift);
+    }
+    private double log_decreasing_threshold(double x, int rest, int total) {
+        double decreaseFactor = (double)(rest) / (double)(total);
+        return x * (Math.log(rest) / decreaseSpeed + minimalShift);
+    }
+
+
+    private void threshold_parameter_set() {
+        // choose different parameter setting
+        // according to different bowlSize and number of players
+        decreaseSpeed = decreaseSpeed;
+        minimalShift = minimalShift;
+        
+        if(bowlSize < 20 ) {
+            decreaseSpeed = 0.5;
+            minimalShift = 0.00;
+        }
+        if(bowlSize >= 20 && bowlSize < 70) {
+            decreaseSpeed = 7.5;
+            minimalShift = 0.00;
+        }
+        if(bowlSize >= 70 && bowlSize < 300) {
+            decreaseSpeed = 10.0;
+            minimalShift = -0.02;
+        }
+        
+        if(bowlSize >= 300) {
+            decreaseSpeed = 10.0;
+            minimalShift = -0.02;   
+        }
+        
+    }
+
+    private double good_bowl_score(int rest, int total) {
         System.out.println("Ex = " + bowl_expectation());
         System.out.println("SD = " + bowl_SD());
-        return bowl_expectation() + bowl_SD() * decreaseFactor / decreaseSpeed;
+        double thresholdShift = 0.0;
+        // choose different parameter setting
+        // according to different bowlSize and number of players 
+        threshold_parameter_set();
+        if(useLog) {
+            thresholdShift = log_decreasing_threshold(bowl_SD(), rest, total); }
+        else {
+            thresholdShift = linear_decreasing_threshold(bowl_SD(), rest, total); }
+        return bowl_expectation() + thresholdShift;
     }
 
     private boolean large_size_strategy(int[] bowl) {
@@ -336,12 +385,14 @@ public class Player extends fruit.sim.Player
         System.out.println( "b-score = " + get_bowl_score(bowl));
         System.out.println( "bowlsRest = " + bowlsRest);
         System.out.println( "totalBowls = " + totalBowls);
-        double decreaseFactor = (double)(bowlsRest) / (double)(totalBowls);
-        if ( (double)(get_bowl_score(bowl)) >= good_bowl_score(decreaseFactor) ) {
-            System.out.println( "g-score = " + good_bowl_score(decreaseFactor));
+        
+        double choosingThreshold = good_bowl_score(bowlsRest, totalBowls);
+
+        if ( (double)(get_bowl_score(bowl)) >=  choosingThreshold) {
+            System.out.println( "g-score = " + choosingThreshold);
             return true;
         }
-        System.out.println( "g-score = " + good_bowl_score(decreaseFactor));
+        System.out.println( "g-score = " + choosingThreshold);
         return false;
     }
 
@@ -356,6 +407,12 @@ public class Player extends fruit.sim.Player
         if (musTake) return true;
         if (!canPick) return false;
 
+        /*
+        // Take it immediately if it's good enough
+        if (get_bowl_score(bowl) >= 9 * bowlSize) {
+            return true;
+        }
+        */
         /*
         if (0 == round) {
             return first_round_strategy();
